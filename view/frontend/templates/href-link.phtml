@@ -1,0 +1,280 @@
+<?php
+/**
+ * MageINIC
+ * Copyright (C) 2023 MageINIC <support@mageinic.com>
+ *
+ * NOTICE OF LICENSE
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see https://opensource.org/licenses/gpl-3.0.html.
+ *
+ * Do not edit or add to this file if you wish to upgrade this extension to newer
+ * version in the future.
+ *
+ * @category MageINIC
+ * @package Hyva_MageINICSizeChart
+ * @copyright Copyright (c) 2023 MageINIC (https://www.mageinic.com/)
+ * @license https://opensource.org/licenses/gpl-3.0.html GNU General Public License,version 3 (GPL-3.0)
+ * @author MageINIC <support@mageinic.com>
+ */
+
+use Magento\Framework\Escaper;
+use MageINIC\SizeChart\Block\SizeChart\SizeChartPopup;
+
+/**
+ * @var $block SizeChartPopup;
+ * @var $escaper Escaper;
+ */
+
+$sizechartcollection = $block->getSizeChartDetails();
+$enable = $block->getEnable();
+?>
+<div x-data="initSizeChartForm()">
+    <?php if ($enable): ?>
+        <?php foreach ($sizechartcollection as $collection): ?>
+            <?php if ($collection->getStatus()): ?>
+    <button @click="openModal()" type="button" class="btn btn-primary">
+                <?= $escaper->escapeHtml(__('Size Chart')) ?>
+    </button>
+        <template x-if="showModal">
+        <div x-cloak>
+            <div class="fixed z-50 inset-0 overflow-y-auto">
+                <div class="flex items-center justify-center min-h-screen">
+                    <div class="fixed inset-0 transition-opacity" aria-hidden="true" @click="closeModal()">
+                        <div class="absolute inset-0 bg-black opacity-75"></div>
+                    </div>
+
+                    <div class="bg-white rounded-lg p-8 w-9/12 mx-auto relative" role="dialog" aria-modal="true"
+                         aria-labelledby="the-label">
+                        <div id="label">
+                            <!-- Your size chart content here -->
+                            <div id="sizechartpopup">
+                                <!-- Your existing size chart content -->
+                                <div id="sizechart">
+                                    <div class="flex flex-wrap">
+                                        <div class="w-full h-full md:w-1/2 p-4">
+                                            <div class="size">
+                                                <div class="measurements">
+                                                    <p>
+                                                        <?= $escaper->escapeHtml(
+                                                            __('Find your size for this dress:')
+                                                        ) ?>
+                                                    </p>
+                                                    <form name="sizechart_form" id="sizechart_form">
+                                                        <table class="w-full">
+                                                            <tbody>
+                                                            <tr>
+                                                                <td class="p-2">
+                                                                    <label for="bust">
+                                                                        <?= $escaper->escapeHtml(__('Bust')) ?>
+                                                                    </label>
+                                                                    <input type="text" id="bust" size="3" value=""
+                                                                           name="bust"
+                                                                           class="border border-gray-300 rounded-md p-1 w-full"
+                                                                           x-model="formData.bust"
+                                                                           @input="findSize('bust', $event.target.value)">
+                                                                </td>
+                                                                <td class="p-2">
+                                                                    <label for="waist">
+                                                                        <?= $escaper->escapeHtml(__('Waist')) ?>
+                                                                    </label>
+                                                                    <input type="text" id="waist" size="3" value=""
+                                                                           name="waist" class="border border-gray-300 rounded-md p-1 w-full"
+                                                                           x-model="formData.waist"
+                                                                           @input="findSize('waist', $event.target.value)"
+                                                                    >
+                                                                </td>
+                                                                <td class="p-2">
+                                                                    <label
+                                                                        for="hip"><?= $escaper->escapeHtml(__('Hips')) ?></label>
+                                                                    <input type="text" id="hip" size="3" value=""
+                                                                           name="hip" class="border border-gray-300 rounded-md p-1 w-full"
+                                                                           x-model="formData.hip"
+                                                                           @input="findSize('hip', $event.target.value)"
+                                                                    >
+                                                                </td>
+                                                            </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </form>
+                                                    <p>
+                                                        <a id="convertsizeunits" rel="nofollow"
+                                                           class="text-blue-500 hover:underline line-clamp-2"
+                                                           x-on:click.prevent="changeUnits()">
+                                                            <?= $escaper->escapeHtml(__('Convert to Centimeters')) ?>
+                                                        </a>
+                                                    </p>
+                                                </div>
+                                                <div class="results mt-4">
+                                                    <p>
+                                                        <?= $escaper->escapeHtml(__('Based on your measurements we recommend ordering size')) ?>
+                                                        <strong id="size-value"></strong>
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <div class="chart">
+                                                <table class="w-full">
+                                                    <thead style="background-color:grey" id="chart_head">
+                                                    <tr>
+                                                        <th><?= $escaper->escapeHtml(__('Size')) ?></th>
+                                                        <th><?= $escaper->escapeHtml(__('Bust')) ?></th>
+                                                        <th><?= $escaper->escapeHtml(__('Waist')) ?></th>
+                                                        <th><?= $escaper->escapeHtml(__('Hips')) ?></th>
+                                                    </tr>
+                                                    </thead>
+                                                    <tbody id="chart_values">
+                                                    <?php
+                                                    $data = $block->getColumns();
+                                                    $columnsNo = (count($data[0]) - 1);
+                                                    $html = '';
+                                                    for ($r = 0; $r <= $columnsNo; $r++) {
+                                                        $html .= '<tr class="group">';
+                                                        for ($c = 0; $c <= 3; $c++) {
+                                                            $html .= '<td class="text-center group-hover:bg-yellow-200">' . $data[$c][$r] . '</td>';
+                                                        }
+                                                        $html .= '</tr>';
+                                                    }
+                                                    /* @noEscape */
+                                                    echo $html;
+                                                    ?>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                            <div class="notes mt-4">
+                                                <p>
+                                                    <?= $escaper->escapeHtml(__('*The following size recommendation is based on the current measurements. The final responsibility on choosing a size is the customers.')) ?>
+                                                </p>
+                                                <button @click="closeModal()" class="absolute top-0 right-0 mt-2 mr-2 flex items-center justify-center w-8 h-8 rounded-full bg-gray-200 hover:bg-gray-300 focus:outline-none">
+                                                    <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="p-4">
+                                            <img
+                                                src="<?= $escaper->escapeUrl($block->getViewFileUrl('MageINIC_SizeChart::images/sizechart-siluete.jpg')); ?>"
+                                                alt="">
+                                            <?php
+                                            if (!empty($collection['content'])): ?>
+                                                <div class="country">
+                                                    <?= /* @noEscape */
+                                                    $block->processContent($collection['content']); ?>
+                                                </div>
+                                            <?php endif; ?>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+</div>
+<?php endif; ?>
+<?php endforeach; ?>
+<?php endif; ?>
+<script>
+    "use strict";
+    function initSizeChartForm() {
+        return {
+            showModal: false,
+            formData: {},
+            openModal() {
+                this.showModal = true;
+            },
+            closeModal() {
+                this.showModal = false;
+            },
+            closestValueIndex(num, arr) {
+                var index = 0;
+                var curr = arr[0];
+                var diff = Math.abs(num - curr);
+                for (var val = 0; val < arr.length; val++) {
+                    var newdiff = Math.abs(num - arr[val]);
+                    if (newdiff < diff) {
+                        diff = newdiff;
+                        index = val;
+                    }
+                }
+                return index;
+            },
+            convertUnits(unit) {
+                for (var i = 2; i <= 4; i++) {
+                    var columns = document.querySelectorAll('#chart_values tr td:nth-child(' + i + ')');
+                    columns.forEach(function (column) {
+                        column.classList.remove("current");
+                        let value = parseFloat(column.textContent, 10);
+                        let convertText, converted;
+
+                        if (unit === 'in') {
+                            converted = value / 2.54;
+                            convertText = "Convert to Centimeters";
+                        } else {
+                            converted = value * 2.54;
+                            convertText = "Convert to Inches";
+                        }
+
+                        column.textContent = converted.toFixed(1);
+                        document.querySelector("#convertsizeunits").innerHTML = convertText;
+                    });
+                }
+            },
+            changeUnits() {
+                var cookie = hyva.getCookie('sizechart');
+                if (null !== cookie && cookie === 'in') {
+                    hyva.setCookie('sizechart','cm');
+                    this.convertUnits('cm');
+                } else {
+                    hyva.setCookie('sizechart','in');
+                    this.convertUnits('in');
+                }
+                let tableRows = document.querySelectorAll('#chart_values tr');
+                tableRows.forEach(function(row) {
+                    row.classList.remove('recommended-size');
+                });
+                let sizeValueElement = document.getElementById('size-value');
+                sizeValueElement.textContent = "";
+            },
+            findSize(field, value) {
+                var form = document.getElementById('sizechart_form');
+                var inputs = form.querySelectorAll('input');
+                var serializedInputs = [];
+                inputs.forEach(function(input) {
+                    serializedInputs.push({ name: input.name, value: input.value });
+                });
+
+                var sizeMatches = [];
+
+                serializedInputs.forEach((input, i) => {
+                    let values = [];
+                    var column = document.querySelectorAll('#chart_values tr td:nth-child(' + (i + 2) + ')');
+                    column.forEach(function(td) {
+                        td.classList.remove("current");
+                        values.push(parseFloat(td.textContent, 10));
+                    });
+
+                    let closestIndex = this.closestValueIndex(input.value, values);
+                    sizeMatches.push(closestIndex);
+                    column[closestIndex].classList.add("current");
+                });
+
+                var sizeIndex = Math.max(...sizeMatches);
+                var rows = document.querySelectorAll('#chart_values tr');
+                rows.forEach(function(row) {
+                    row.classList.remove("recommended-size");
+                });
+                rows[sizeIndex].classList.add("recommended-size");
+                var tableRows = document.querySelectorAll('#chart_values tr');
+                document.getElementById('size-value').textContent = tableRows[sizeIndex].querySelector('td:nth-child(1)').textContent;
+            }
+        }
+    }
+</script>

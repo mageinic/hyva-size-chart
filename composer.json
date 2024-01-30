@@ -1,0 +1,30 @@
+{
+    "name": "mageinic/hyva-size-chart",
+    "description": "Hyva Size Chart by MageINIC, The Hyva Size Chart extension is a valuable tool for online stores, especially those selling apparel and footwear. It enables you to effortlessly create and display comprehensive size charts for your products. With features like dynamic content, multiple-size entries, and easy management from product pages.",
+    "type": "magento2-module",
+    "license": [
+        "OSL-3.0",
+        "AFL-3.0"
+    ],
+    "version": "1.0.0",
+    "require": {
+        "magento/framework": "*",
+        "mageinic/size-chart": "1.0.*",
+        "hyva-themes/magento2-compat-module-fallback": "*"
+    },
+    "authors": [
+        {
+            "name": "MageINIC",
+            "email": "support@mageinic.com",
+            "homepage": "https://www.mageinic.com"
+        }
+    ],
+    "autoload": {
+        "files": [
+            "registration.php"
+        ],
+        "psr-4": {
+            "Hyva\\MageINICSizeChart\\": ""
+        }
+    }
+}
